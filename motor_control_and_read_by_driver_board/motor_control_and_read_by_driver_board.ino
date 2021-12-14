@@ -1,0 +1,33 @@
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include <Encoder.h>
+
+Encoder motor1(14, 15);
+double timeunit = 100.0;
+double sensor_R = 13.0;
+double time_s = timeunit/1000.0;
+double time_s_ratio = 1/time_s;
+double time_s_m = time_s_ratio*60.0;
+int A_PWM = 9 ;
+int A_1 = 10;
+int A_2 = 11; 
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(A_PWM, OUTPUT);
+  pinMode(A_1, OUTPUT);
+  pinMode(A_2, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(A_1,LOW);
+  digitalWrite(A_2,HIGH);
+  analogWrite(A_PWM,10);
+  long pluse_1;
+  long rpm1;
+  pluse_1=motor1.read();
+  rpm1=(pluse_1*time_s_m)/sensor_R;
+  Serial.printf("motor pluse: %ld \n", pluse_1);
+  Serial.printf("motor rpm: %ld  \n", rpm1);
+  motor1.write(0);
+  delay(timeunit);
+}

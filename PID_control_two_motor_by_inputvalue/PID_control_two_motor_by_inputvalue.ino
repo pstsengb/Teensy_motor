@@ -13,11 +13,11 @@ double time_s_ratio = 1/time_s;
 double time_s_m = time_s_ratio*60;
 //double tar_rpm_B = 9000.0;
 //double tar_rpm_A = 9000.0;
-double Kp = 0.04;
+double Kp = 0.02;
 double error_i_B = 0.0;
 double error_i_A = 0.0;
-double Ki = 0.009;
-double Kd = 0.000;
+double Ki = 0.6;
+double Kd = 0.0000000000001;
 double z=1.0;
 int B_PWM = 9;
 int B_1 = 10;
@@ -25,6 +25,10 @@ int B_2 = 11;
 int A_PWM = 5;
 int A_1 = 6;
 int A_2 = 7;
+int tar_rpm_BB;
+int tar_rpm_AA;
+double tar_rpm_B;
+double tar_rpm_A;
 
 void setup() {
   Serial.begin(9600);
@@ -48,9 +52,9 @@ void loop() {
   pluse_2=motor2.read();
   rpm1=(pluse_1*time_s_m)/sensor_R;
   rpm2=(pluse_2*time_s_m)/sensor_R;
-  Serial.printf("motor rpm: %ld,%ld\n", rpm1,rpm2);
-  if(Serial.available()>0){
-    if(Serial.available()==8){
+  motor1.write(0);
+  motor2.write(0);
+    if(Serial.available()>7){
       int A = Serial.read();
       int B = Serial.read();
       int C = Serial.read();
@@ -67,10 +71,20 @@ void loop() {
       F = F-48.0;
       G = G-48.0;
       H = H-48.0;
-      int tar_rpm_BB = A*1000.0+B*100.0+C*10.0+D;
-      int tar_rpm_AA = E*1000.0+F*100.0+G*10.0+H; 
-      double tar_rpm_B=tar_rpm_BB*z;
-      double tar_rpm_A=tar_rpm_AA*z;
+      tar_rpm_BB = A*1000.0+B*100.0+C*10.0+D;
+      tar_rpm_AA = E*1000.0+F*100.0+G*10.0+H; 
+      tar_rpm_B=tar_rpm_BB*z;
+      tar_rpm_A=tar_rpm_AA*z;
+    }
+     else{
+        int serial_length = Serial.available();
+        for(int i=0;i<serial_length;i++){
+          int dummy_reader = Serial.read();
+          Serial.print("dummy_reader:");
+          Serial.println(dummy_reader);
+        }
+     }
+
       double error_B = tar_rpm_B-rpm1;
       double error_A = tar_rpm_A-rpm2;
       error_i_B = error_i_B+error_B*time_s;
@@ -79,6 +93,7 @@ void loop() {
       double error_d_A = error_A/time_s;
       double out_put_B = Kp*error_B+Ki*error_i_B+Kd*error_d_B;
       double out_put_A = Kp*error_A+Ki*error_i_A+Kd*error_d_A;
+      Serial.printf("motor rpm: %ld,%ld,%.2f,%.2f\n", rpm1,rpm2,error_B,error_A);
         if((out_put_B>0 && out_put_A>0) ||(out_put_B<0 && out_put_A<0)){
           if(out_put_B>0 && out_put_A>0){
             digitalWrite(B_1,LOW);
@@ -127,17 +142,5 @@ void loop() {
             analogWrite(A_PWM,out_put_A);
           }
         }
-      }
-      else{
-        int serial_length = Serial.available();
-        for(int i=0;i<serial_length;i++){
-          int dummy_reader = Serial.read();
-          Serial.print("dummy_reader:");
-          Serial.println(dummy_reader);
-        }
-      }
-  }
-  motor1.write(0);
-  motor2.write(0);
   delay(timeunit);
 }

@@ -96,8 +96,8 @@ void loop() {
       Serial.printf("motor rpm: %ld,%ld,%.2f,%.2f\n", rpm1,rpm2,error_B,error_A);
         if((out_put_B>0 && out_put_A>0) ||(out_put_B<0 && out_put_A<0)){
           if(out_put_B>0 && out_put_A>0){
-            digitalWrite(B_1,LOW);
-            digitalWrite(B_2,HIGH);
+            digitalWrite(B_1,HIGH);
+            digitalWrite(B_2,LOW);
             digitalWrite(A_1,HIGH);
             digitalWrite(A_2,LOW);
             out_put_B = min(out_put_B,950);
@@ -106,8 +106,8 @@ void loop() {
             analogWrite(A_PWM,out_put_A);
           }
           else{
-            digitalWrite(B_1,HIGH);
-            digitalWrite(B_2,LOW);
+            digitalWrite(B_1,LOW);
+            digitalWrite(B_2,HIGH);
             digitalWrite(A_1,LOW);
             digitalWrite(A_2,HIGH);
             out_put_B = out_put_B*-1.0;
@@ -120,8 +120,8 @@ void loop() {
         }
         else if((out_put_B>0 && out_put_A<0) ||(out_put_B<0 && out_put_A>0)){
           if(out_put_B>0 && out_put_A<0){
-            digitalWrite(B_1,LOW);
-            digitalWrite(B_2,HIGH);
+            digitalWrite(B_1,HIGH);
+            digitalWrite(B_2,LOW);
             digitalWrite(A_1,LOW);
             digitalWrite(A_2,HIGH);
             out_put_B = min(out_put_B,950);
@@ -131,8 +131,8 @@ void loop() {
             analogWrite(A_PWM,out_put_A);
           }
           else{
-            digitalWrite(B_1,HIGH);
-            digitalWrite(B_2,LOW);
+            digitalWrite(B_1,LOW);
+            digitalWrite(B_2,HIGH);
             digitalWrite(A_1,HIGH);
             digitalWrite(A_2,LOW);
             out_put_B = out_put_B*-1.0;

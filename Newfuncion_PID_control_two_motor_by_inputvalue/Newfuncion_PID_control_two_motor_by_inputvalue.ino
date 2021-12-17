@@ -42,8 +42,8 @@ int A_1 = 6;
 int A_2 = 7;
 int tar_rpm_BB;
 int tar_rpm_AA;
-
-
+double last_error_B=0.0;
+double last_error_A=0.0;
 
 void setup() {
   Serial.begin(115200);
@@ -124,8 +124,11 @@ void loop() {
   double error_A = tar_rpm_A-rpmA;
   error_i_B = error_i_B+error_B*time_s;
   error_i_A = error_i_A+error_A*time_s;
-  double error_d_B = error_B/time_s;
-  double error_d_A = error_A/time_s;
+  double error_d_B = (error_B - last_error_B)/time_s;
+  double error_d_A = (error_A - last_error_A)/time_s;
+  last_error_B = error_B;
+  last_error_A = error_A;
+  
   double out_put_B = Kp*error_B+Ki*error_i_B+Kd*error_d_B;
   double out_put_A = Kp*error_A+Ki*error_i_A+Kd*error_d_A;
   if(tar_rpm_B ==0){

@@ -5,21 +5,21 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
-//#include <ros.h>
-//#include <ros/time.h>
-//#include <tf/tf.h>
-//#include <tf/transform_broadcaster.h>
-//ros::NodeHandle  nh;
-//geometry_msgs::TransformStamped t;
-//tf::TransformBroadcaster broadcaster;
+#include <ros.h>
+#include <ros/time.h>
+#include <tf/tf.h>
+#include <tf/transform_broadcaster.h>
+ros::NodeHandle  nh;
+geometry_msgs::TransformStamped t;
+tf::TransformBroadcaster broadcaster;
 
 //B is left_motor form back see
 //A is right_motor from back see
 
 Encoder motorL(14, 15);
 Encoder motorR(16, 17);
-//char base_link[] = "/base_link";
-//char odom[] = "/odom";
+char base_link[] = "/base_link";
+char odom[] = "/odom";
 double pi=3.1415;
 double wheel_diameter=0.065; //unit=m
 double gear_ratio=30.0;
@@ -83,8 +83,8 @@ void setup() {
   analogWriteFrequency(9,93750);
   analogWriteFrequency(5,93750);
   analogWriteResolution(10);
-  //nh.initNode();
-  //broadcaster.init(nh);
+  nh.initNode();
+  broadcaster.init(nh);
 }
 
 void loop() {
@@ -106,15 +106,15 @@ void loop() {
   bno.getEvent(&angVelocityData,Adafruit_BNO055::VECTOR_GYROSCOPE);
   rad = rad +angVelocityData.gyro.z*time_s;
   Serial.printf("motor L rpm: %.2f, motor R rpm: %.2f, tar_rpm_L: %.2f, tar_rpm_R: %.2f\n", rpmL,rpmR,tar_rpm_L,tar_rpm_R);
-  //t.header.frame_id = odom;
-  //t.child_frame_id = base_link;
-  //t.transform.translation.x = rpmL;
-  //t.transform.translation.y = rpmR;
-  //t.transform.rotation.x = tar_rpm_L;
-  //t.transform.rotation.y = tar_rpm_R;
-  //t.header.stamp = nh.now();
-  //broadcaster.sendTransform(t);
-  //nh.spinOnce();
+  t.header.frame_id = odom;
+  t.child_frame_id = base_link;
+  t.transform.translation.x = rpmL;
+  t.transform.translation.y = rpmR;
+  t.transform.rotation.x = tar_rpm_L;
+  t.transform.rotation.y = tar_rpm_R;
+  t.header.stamp = nh.now();
+  broadcaster.sendTransform(t);
+  nh.spinOnce();
   motorL.write(0);
   motorR.write(0);
   if(Serial.available()>7){

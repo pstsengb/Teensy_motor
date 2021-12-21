@@ -78,9 +78,9 @@ void setup() {
 
 void loop() {
   long pulse_L;
-  long rpmL;
+  double rpmL;
   long pulse_R;
-  long rpmR;
+  double rpmR;
   pulse_L=motorL.read();
   pulse_R=motorR.read();
   rpmL=(pulse_L*time_s_m)/sensor_R;
@@ -94,7 +94,7 @@ void loop() {
   sensors_event_t angVelocityData;
   bno.getEvent(&angVelocityData,Adafruit_BNO055::VECTOR_GYROSCOPE);
   rad = rad +angVelocityData.gyro.z*time_s;
-  Serial.printf("motor L rpm: %ld, motor R rpm: %ld, tar_rpm_L: %.2f, tar_rpm_R: %.2f\n", rpmL,rpmR,tar_rpm_L,tar_rpm_R);
+  Serial.printf("motor L rpm: %.2f, motor R rpm: %.2f, tar_rpm_L: %.2f, tar_rpm_R: %.2f\n", rpmL,rpmR,tar_rpm_L,tar_rpm_R);
   motorL.write(0);
   motorR.write(0);
   if(Serial.available()>7){

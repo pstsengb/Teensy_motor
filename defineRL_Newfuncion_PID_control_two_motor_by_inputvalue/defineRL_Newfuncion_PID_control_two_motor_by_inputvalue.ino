@@ -44,6 +44,19 @@ int tar_rpm_LL;
 int tar_rpm_RR;
 double last_error_L=0.0;
 double last_error_R=0.0;
+double m_v = 0.0;
+double m_w = 0.0;
+double m_v_input = 0.0;
+double m_w_input = 0.0;
+double v_r = 0;
+double v_l = 0;
+double target_r = 0;
+double target_l = 0;
+double m_required_v_r = 0;
+double m_required_v_l = 0;
+double target_rotation_r = 0;
+double target_rotation_l = 0;
+double m_base_long = 0.081;
 
 void setup() {
   Serial.begin(115200);
@@ -81,36 +94,42 @@ void loop() {
   sensors_event_t angVelocityData;
   bno.getEvent(&angVelocityData,Adafruit_BNO055::VECTOR_GYROSCOPE);
   rad = rad +angVelocityData.gyro.z*time_s;
-  Serial.printf("motor L rpm: %ld, motor R rpm: %ld, veolity_L: %.2f, veolity_R: %.2f, displacement_L: %.2f, displacement_R: %.2f, ang_veolity: %.2f, ang_displacement: %.2f\n", rpmL,rpmR,veolity_L,veolity_R,displacement_L,displacement_R,angVelocityData.gyro.z,rad);
+  Serial.printf("motor L rpm: %ld, motor R rpm: %ld, tar_rpm_L: %.2f, tar_rpm_R: %.2f\n", rpmL,rpmR,tar_rpm_L,tar_rpm_R);
   motorL.write(0);
   motorR.write(0);
-  if(Serial.available()>9){
+  if(Serial.available()>7){
     int A = Serial.read();
     int B = Serial.read()-48;
     int C = Serial.read()-48;
     int D = Serial.read()-48;
-    int E = Serial.read()-48;
-    int F = Serial.read();
+    int E = Serial.read();
+    int F = Serial.read()-48;
     int G = Serial.read()-48;
     int H = Serial.read()-48;
-    int I = Serial.read()-48;
-    int J = Serial.read()-48;
-    tar_rpm_LL = B*1000.0+C*100.0+D*10.0+E;
-    tar_rpm_RR = G*1000.0+H*100.0+I*10.0+J; 
-    tar_rpm_L=tar_rpm_LL*z;
-    tar_rpm_R=tar_rpm_RR*z;
-    if(A == 45){
-      tar_rpm_L = tar_rpm_LL*-1.0;
-    }
-    else if(A == 43){
-      tar_rpm_L = tar_rpm_LL*1.0;  
-    }
-    if(F == 45){
-      tar_rpm_R = tar_rpm_RR*-1.0;  
-    }
-    else if(F == 43){
-      tar_rpm_R = tar_rpm_RR*1.0;  
-    }
+    m_v_input = B*1.0+C/10.0+D/100.0;
+    m_w_input = F*1.0+G/10.0+H/100.0;
+      if(A == 45){
+        m_v_input = m_v_input *-1.0;
+      }
+      else if(A == 43){
+        m_v_input = m_v_input*1.0;  
+      }
+      if(E == 45){
+        m_w_input =  m_w_input*-1.0;  
+      }
+      else if(E == 43){
+        m_w_input =  m_w_input*1.0;  
+      } 
+    //v_r = rmp_r/m_ppr/m_gear_ratio*3.14159*m_D; 
+    //v_l = rmp_l/m_ppr/m_gear_ratio*3.14159*m_D;
+    target_r = m_v_input*gear_ratio/3.14159/wheel_diameter*4*60;
+    target_l = m_v_input*gear_ratio/3.14159/wheel_diameter*4*60;
+    m_required_v_r = m_base_long * m_w_input;
+    m_required_v_l = -1.0*m_base_long * m_w_input;
+    target_rotation_r = m_required_v_r*gear_ratio/3.14159/wheel_diameter*4*60;
+    target_rotation_l = m_required_v_l*gear_ratio/3.14159/wheel_diameter*4*60;
+    tar_rpm_L=target_r + target_rotation_r;
+    tar_rpm_R=target_l + target_rotation_l;
   }
   else{
     int serial_length = Serial.available();
@@ -127,8 +146,7 @@ void loop() {
   double error_d_L = (error_L - last_error_L)/time_s;
   double error_d_R = (error_R - last_error_R)/time_s;
   last_error_L = error_L;
-  last_error_R = error_R;
-  
+  last_error_R = error_R; 
   double out_put_L = Kp*error_L+Ki*error_i_L+Kd*error_d_L;
   double out_put_R = Kp*error_R+Ki*error_i_R+Kd*error_d_R;
   if(tar_rpm_L ==0){

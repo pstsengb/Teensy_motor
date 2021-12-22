@@ -31,20 +31,21 @@ void setMotorBackward(int pin1, int pin2){
   digitalWrite(pin2,HIGH);
 }
 
-double caluate_PID(double x,double y){
-  double result;
-    result = x - y;
-    double result1;
-      result1 = result1+result*time_s;
-      double result2;
-        result2 =(result-last_error_B)/time_s;
-        last_error_B =result;
-        double result3;
-          result3 = Kp*result+Ki*result1+Kd*result2;
-        return result3;
-      return result2;
-    return result1;
-  return result;
+
+double caluate_PID(double tar_rpm,double cur_rpm){
+  double error_B;
+    error_B = tar_rpm - cur_rpm;
+    double error_i_B;
+      error_i_B = error_i_B + error_B * time_s;
+      double error_d_B;
+        error_d_B = (error_B -last_error_B) / time_s;
+        last_error_B = error_B;
+        double out_put_B;
+          out_put_B = Kp*error_B + Ki*error_i_B + Kd*error_d_B;
+        return out_put_B;
+      return error_d_B;
+    return error_i_B;
+  return error_B;
   }
   //double error_B = tar_rpm_B-rpmB;
   //error_i_B = error_i_B+error_B*time_s;
@@ -97,7 +98,7 @@ void loop() {
       Serial.println(dummy_reader);
     }
   }
-
+  double result1 =0;
   double out_put_B = caluate_PID(tar_rpm_B,rpmB);
 
   if(tar_rpm_B ==0){

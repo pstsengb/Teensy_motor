@@ -25,20 +25,18 @@ ros::Subscriber<geometry_msgs::Twist> sub_cmd_vel("cmd_vel", messageCb );
 class Motor{
 
   public:
-    Motor(double m_dt, int m_dir_pin1, int m_dir_pin2, int m_pwm_pin);
+    Motor(double m_dt, int m_dir_pin1, int m_dir_pin2, int m_pwm_pin,int m_read_pin1,int m_read_pin2);
+    Encoder* motorencoder;
     double target_rpm_l;
     double target_rpm_r;
     double target_rpm;
-    double measured_rpm_l;
-    double measured_rpm_r;
     double measured_rpm;
     double last_err;
     double dt,dtt;
     double err, err_i, err_d;
     double kp, kd, ki;
     double output;
-    long pulseL;
-    long pulseR;
+    long pulse;
     double gear_ratio;
     double wheel;
     double base_long;
@@ -56,9 +54,10 @@ class Motor{
   
 };
 
-Motor m1(0.02, 10, 11, 9), m2(0.02, 6, 7, 5);  
+Motor m1(0.04, 10, 11, 9, 14, 15), m2(0.04, 6, 7, 5, 16, 17);   
 
-Motor::Motor(double m_dt, int m_dir_pin1, int m_dir_pin2, int m_pwm_pin){
+Motor::Motor(double m_dt, int m_dir_pin1, int m_dir_pin2, int m_pwm_pin,int m_read_pin1,int m_read_pin2){
+  motorencoder = new Encoder(m_read_pin1,m_read_pin2);
   gear_ratio = 30.0;
   wheel = 0.065;
   base_long = 0.081;
@@ -69,8 +68,6 @@ Motor::Motor(double m_dt, int m_dir_pin1, int m_dir_pin2, int m_pwm_pin){
   err_d = 0.0;
   last_err = 0.0;
   output = 0.0;
-  pulseL =0.0;
-  pulseR =0.0;
   dir_pin1 = m_dir_pin1;
   dir_pin2 = m_dir_pin2;
   pwm_pin = m_pwm_pin;
@@ -121,10 +118,8 @@ void Motor::computeError(){
 }
 
 void Motor::inputdata(){
-
     double m_v_input = v_in*1.0;  
     double m_w_input = w_in*1.0;  
-
     double target_r = m_v_input*gear_ratio/3.14159/wheel*4*60;
     double target_l = m_v_input*gear_ratio/3.14159/wheel*4*60;
     double m_required_v_r = base_long * m_w_input;
@@ -135,19 +130,12 @@ void Motor::inputdata(){
     double tar_rpm_R=target_l + target_rotation_l;
     target_rpm_l = tar_rpm_L;
     target_rpm_r = tar_rpm_R;
-  
   }
 
-Encoder motorL(14, 15);
-Encoder motorR(16, 17);
 void Motor::readdata(){
-  pulseL = motorL.read();
-  pulseR = motorR.read();
-  measured_rpm_l = (pulseL*3000)/13;
-  measured_rpm_r = (pulseR*3000)/13;
-  motorL.write(0);
-  motorR.write(0);
-  delay(dtt);
+  pulse = motorencoder->read();
+  measured_rpm = (pulse*1/dt*60)/13;
+  motorencoder->write(0);
 }
 
 double getAngvel(){
@@ -171,23 +159,27 @@ void setup() {
 }
 
 void loop() {
+  
   double angvel = getAngvel();
 
   m1.inputdata();
   m1.readdata();
+  m2.readdata();
    
-  m1.setupPID(0.03, 0.6, 0.00000001);
-  m2.setupPID(0.025, 0.6, 0.00000001);
+  m1.setupPID(0.02, 0.6, 0.00000001);
+  m2.setupPID(0.02, 0.6, 0.00000001);
 
-  m1.setRPMs(m1.target_rpm_l, m1.measured_rpm_l);
-  m2.setRPMs(m1.target_rpm_r, m1.measured_rpm_r);
+  m1.setRPMs(m1.target_rpm_l, m1.measured_rpm);
+  m2.setRPMs(m1.target_rpm_r, m1.measured_rpm);
 
   m1.computeError();
   m2.computeError();
 
   m1.controlByPID();
   m2.controlByPID();
+  
   nh.spinOnce();
+  delay(m1.dtt);
   
 //Serial.printf("m1 cur rpm: %.2f  ,m2 cur rpm: %.2f  ,m1 tar rpm: %.2f  ,m2 tar rpm: %.2f\n", m1.measured_rpm_l,m1.measured_rpm_r,m1.target_rpm_l,m1.target_rpm_r);
 //Serial.printf("angv: %.2f\n", angvel);
